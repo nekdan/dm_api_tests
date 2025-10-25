@@ -10,7 +10,7 @@ def test_post_v1_account():
     account_api = AccountAPI(host='http://5.63.153.31:5051')
     login_api = LoginAPI(host='http://5.63.153.31:5051')
     mailhog_api = MailhogAPI(host='http://5.63.153.31:5025')
-    login = 'n.danilushkin5'
+    login = 'n.danilushkin6'
     email = f'{login}@mail.ru'
     password = '123456'
     json_data = {
