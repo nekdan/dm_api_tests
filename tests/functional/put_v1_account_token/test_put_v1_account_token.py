@@ -3,16 +3,14 @@ from json import loads
 from requests import Response
 
 from dm_api_account.apis.account_api import AccountAPI
-from dm_api_account.apis.login_api import LoginAPI
 from api_mailhog.apis.mailhog_api import MailhogAPI
 
 
-def test_post_v1_account():
+def test_put_v1_account_token():
     # Регистрация пользователя
     account_api = AccountAPI(host='http://5.63.153.31:5051')
-    login_api = LoginAPI(host='http://5.63.153.31:5051')
     mailhog_api = MailhogAPI(host='http://5.63.153.31:5025')
-    login = 'n.danilushkin9'
+    login = 'n.danilushkin12'
     email = f'{login}@mail.ru'
     password = '123456'
     json_data = {
@@ -34,15 +32,6 @@ def test_post_v1_account():
     # Активация пользователя
     response = account_api.put_v1_account_token(token=token)
     assert response.status_code == 200, "Пользователь не был активирован"
-
-    # Авторизация
-    json_data = {
-        'login': login,
-        'password': password,
-        'rememberMe': True,
-    }
-    response = login_api.post_v1_account_login(json_data=json_data)
-    assert response.status_code == 200, "Пользователь не смог авторизоваться"
 
 
 def get_activation_token_by_login(login: str, response: Response) -> str:
