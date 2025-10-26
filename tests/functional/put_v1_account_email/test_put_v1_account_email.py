@@ -7,13 +7,15 @@ from dm_api_account.apis.login_api import LoginAPI
 from api_mailhog.apis.mailhog_api import MailhogAPI
 
 
-def test_post_v1_account():
+def test_put_v1_account_email():
     # Регистрация пользователя
     account_api = AccountAPI(host='http://5.63.153.31:5051')
     login_api = LoginAPI(host='http://5.63.153.31:5051')
     mailhog_api = MailhogAPI(host='http://5.63.153.31:5025')
-    login = 'n.danilushkin9'
+    login = 'n.danilushkin11'
     email = f'{login}@mail.ru'
+    new_login = login + '_new'
+    new_email = f'{new_login}@mail.ru'
     password = '123456'
     json_data = {
         'login': login,
@@ -36,6 +38,44 @@ def test_post_v1_account():
     assert response.status_code == 200, "Пользователь не был активирован"
 
     # Авторизация
+    json_data = {
+        'login': login,
+        'password': password,
+        'rememberMe': True,
+    }
+    response = login_api.post_v1_account_login(json_data=json_data)
+    assert response.status_code == 200, "Пользователь не смог авторизоваться"
+
+    # Меняем емейл
+    json_data = {
+        'login': login,
+        'password': password,
+        'email': new_email,
+    }
+    response = account_api.put_v1_account_email(json_data=json_data)
+    assert response.status_code == 200, f"Ошибка {response.status_code} - email не изменён"
+
+    # Пытаемся войти с новой почтой, получаем 403
+    json_data = {
+        'login': login,
+        'password': password,
+        'rememberMe': True,
+    }
+    response = login_api.post_v1_account_login(json_data=json_data)
+    assert response.status_code == 403, \
+        f"Не получили ошибку авторизации. Статус код - {response.status_code}. Ожидали - 403"
+
+    # На почте находим токен для подтверждения смены емейла
+    response = mailhog_api.get_api_v2_messages()
+    assert response.status_code == 200, "Письма не были получены"
+    token = get_activation_token_by_login(login, response)
+    assert token is not None, f"Токен для пользователя {login} не был получен"
+
+    # Активируем этот токен
+    response = account_api.put_v1_account_token(token=token)
+    assert response.status_code == 200, "Пользователь не был активирован"
+
+    # Логинимся
     json_data = {
         'login': login,
         'password': password,
