@@ -27,7 +27,7 @@ def test_put_v1_account_email():
     new_email = f'{new_login}@mail.ru'
     password = '123456'
 
-    account_helper.register_new_user(login, email, password)
+    account_helper.register_new_user(login, password, email)
     account_helper.user_login(login, password)
     account_helper.change_email(login, password, new_email)
     account_helper.user_login(login, password, expected_status_code=403)

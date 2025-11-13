@@ -25,5 +25,5 @@ def test_post_v1_account_login():
     email = f'{login}@mail.ru'
     password = '123456'
 
-    account_helper.register_new_user(login, email, password)
+    account_helper.register_new_user(login, password, email)
     account_helper.user_login(login, password)
