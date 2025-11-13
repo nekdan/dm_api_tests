@@ -1,19 +1,16 @@
-import requests
 from requests import Response
 
+from restclient.client import RestClient
 
-class AccountAPI:
-    def __init__(self, host, headers=None):
-        self.host = host
-        self.headers = headers
 
+class AccountAPI(RestClient):
     def post_v1_account(self, json_data: dict[str, str]) -> Response:
         """
         Register new user
         :param json_data: A JSON serializable Python object to send in the body of the :class:`Request`
         :return: The :class:`Response <Response>` object, which contains a server's response to an HTTP request
         """
-        response = requests.post(f'{self.host}/v1/account', json=json_data)
+        response = self.post('/v1/account', json=json_data)
         return response
 
     def put_v1_account_token(self, token: str) -> Response:
@@ -25,7 +22,7 @@ class AccountAPI:
         headers = {
             'accept': 'text/plain',
         }
-        response = requests.put(f'{self.host}/v1/account/{token}', headers=headers)
+        response = self.put(f'/v1/account/{token}', headers=headers)
         return response
 
     def put_v1_account_email(self, json_data: dict[str, str]) -> Response:
@@ -38,5 +35,5 @@ class AccountAPI:
             'accept': 'text/plain',
             'Content-Type': 'application/json',
         }
-        response = requests.put(f'{self.host}/v1/account/email', headers=headers, json=json_data)
+        response = self.put('/v1/account/email', headers=headers, json=json_data)
         return response

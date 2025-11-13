@@ -1,18 +1,31 @@
 from json import loads
 
+import structlog
 from requests import Response
 
 from dm_api_account.apis.account_api import AccountAPI
 from dm_api_account.apis.login_api import LoginAPI
 from api_mailhog.apis.mailhog_api import MailhogAPI
+from restclient.configuration import Configuration as MailhogConfiguration
+from restclient.configuration import Configuration as DmApiConfiguration
+
+structlog.configure(
+    processors=[
+        structlog.processors.JSONRenderer(indent=4, ensure_ascii=True, sort_keys=True),
+    ]
+)
 
 
 def test_post_v1_account():
     # Регистрация пользователя
-    account_api = AccountAPI(host='http://5.63.153.31:5051')
-    login_api = LoginAPI(host='http://5.63.153.31:5051')
-    mailhog_api = MailhogAPI(host='http://5.63.153.31:5025')
-    login = 'n.danilushkin9'
+    mailhog_configuration = MailhogConfiguration(host='http://5.63.153.31:5025')
+    dm_api_configuration =DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
+
+    account_api = AccountAPI(configuration=dm_api_configuration)
+    login_api = LoginAPI(configuration=dm_api_configuration)
+    mailhog_api = MailhogAPI(configuration=mailhog_configuration)
+
+    login = 'n.danilushkin21'
     email = f'{login}@mail.ru'
     password = '123456'
     json_data = {
