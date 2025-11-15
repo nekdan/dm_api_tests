@@ -21,7 +21,7 @@ def test_put_v1_account_token():
     mailhog = ApiMailhog(configuration=mailhog_configuration)
     account_helper = AccountHelper(dm_account_api=account, mailhog=mailhog)
 
-    login = 'n.danilushkin34'
+    login = 'n.danilushkin48'
     email = f'{login}@mail.ru'
     password = '123456'
 
