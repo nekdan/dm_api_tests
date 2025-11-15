@@ -21,7 +21,7 @@ def test_put_v1_account_email():
     mailhog = ApiMailhog(configuration=mailhog_configuration)
     account_helper = AccountHelper(dm_account_api=account, mailhog=mailhog)
 
-    login = 'n.danilushkin33'
+    login = 'n.danilushkin47'
     email = f'{login}@mail.ru'
     new_login = login + '_new'
     new_email = f'{new_login}@mail.ru'

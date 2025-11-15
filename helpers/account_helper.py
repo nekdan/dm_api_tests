@@ -1,9 +1,25 @@
+import time
 from json import loads
-
-from requests import Response
 
 from services.api_mailhog import ApiMailhog
 from services.dm_api_account import DMApiAccount
+
+def retrier(number_retries: int = 3, delay_seconds: int = 1):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            token = None
+            count = 0
+            while token is None:
+                print(f"Попытка получения токена №{count}")
+                token = func(*args, **kwargs)
+                count += 1
+                if count > number_retries:
+                    raise AssertionError(f"Превышено количество попыток получения активационного токена [{number_retries}]")
+                if token:
+                    return token
+                time.sleep(delay_seconds)
+        return wrapper
+    return decorator
 
 
 class AccountHelper:
@@ -23,9 +39,7 @@ class AccountHelper:
         return response
 
     def confirm_by_email(self, login: str):
-        response = self.mailhog.mailhog_api.get_api_v2_messages()
-        assert response.status_code == 200, "Письма не были получены"
-        token = self.get_activation_token_by_login(login, response)
+        token = self.get_activation_token_by_login(login)
         assert token is not None, f"Токен для пользователя {login} не был получен"
         response = self.dm_account_api.account_api.put_v1_account_token(token=token)
         assert response.status_code == 200, "Пользователь не был активирован"
@@ -42,8 +56,10 @@ class AccountHelper:
             f"Ошибка авторизации. Ожидался статус-код {expected_status_code}, но получен {response.status_code}"
         return response
 
-    @staticmethod
-    def get_activation_token_by_login(login: str, response: Response) -> str:
+    @retrier()
+    def get_activation_token_by_login(self, login: str) -> str:
+        response = self.mailhog.mailhog_api.get_api_v2_messages()
+        assert response.status_code == 200, "Письма не были получены"
         token = None
         for item in response.json()['items']:
             user_data = loads(item['Content']['Body'])
