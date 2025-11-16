@@ -27,6 +27,18 @@ class AccountHelper:
         self.dm_account_api = dm_account_api
         self.mailhog = mailhog
 
+    def auth_client(self, login: str, password: str):
+        json_data = {
+            'login': login,
+            'password': password,
+        }
+        response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
+        token = {
+            'x-dm-auth-token': response.headers['x-dm-auth-token']
+        }
+        self.dm_account_api.account_api.set_headers(token)
+        self.dm_account_api.login_api.set_headers(token)
+
     def register_new_user(self, login: str, password: str, email: str):
         json_data = {
             'login': login,
@@ -73,6 +85,16 @@ class AccountHelper:
             'login': login,
             'password': password,
             'email': new_email,
+        }
+        response = self.dm_account_api.account_api.put_v1_account_email(json_data=json_data)
+        assert response.status_code == 200, f"Ошибка {response.status_code} - email не изменён"
+
+    def change_password(self, login: str, token: str, old_password: str, new_password: str):
+        json_data = {
+            'login': login,
+            'token': token,
+            'oldPassword': old_password,
+            'newPassword': new_password,
         }
         response = self.dm_account_api.account_api.put_v1_account_email(json_data=json_data)
         assert response.status_code == 200, f"Ошибка {response.status_code} - email не изменён"

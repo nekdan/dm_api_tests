@@ -13,6 +13,14 @@ class AccountAPI(RestClient):
         response = self.post('/v1/account', json=json_data)
         return response
 
+    def get_v1_account(self, **kwargs) -> Response:
+        """
+        Get current user
+        :return: The :class:`Response <Response>` object, which contains a server's response to an HTTP request
+        """
+        response = self.get('/v1/account', **kwargs)
+        return response
+
     def put_v1_account_token(self, token: str) -> Response:
         """
         Activate registered user
