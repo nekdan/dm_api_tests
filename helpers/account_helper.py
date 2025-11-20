@@ -7,6 +7,7 @@ from services.dm_api_account import DMApiAccount
 def retrier(number_retries: int = 3, delay_seconds: int = 1):
     def decorator(func):
         def wrapper(*args, **kwargs):
+            login = kwargs.get('login')
             token = None
             count = 0
             while token is None:
@@ -14,7 +15,7 @@ def retrier(number_retries: int = 3, delay_seconds: int = 1):
                 token = func(*args, **kwargs)
                 count += 1
                 if count > number_retries:
-                    raise AssertionError(f"Превышено количество попыток получения активационного токена [{number_retries}]")
+                    raise AssertionError(f"Превышено количество попыток({number_retries}) получения токена для {login}")
                 if token:
                     return token
                 time.sleep(delay_seconds)
@@ -51,7 +52,7 @@ class AccountHelper:
         return response
 
     def confirm_by_email(self, login: str):
-        token = self.get_activation_token_by_login(login)
+        token = self.get_activation_token_by_login(login=login)
         assert token is not None, f"Токен для пользователя {login} не был получен"
         response = self.dm_account_api.account_api.put_v1_account_token(token=token)
         assert response.status_code == 200, "Пользователь не был активирован"
@@ -68,17 +69,24 @@ class AccountHelper:
             f"Ошибка авторизации. Ожидался статус-код {expected_status_code}, но получен {response.status_code}"
         return response
 
-    @retrier()
-    def get_activation_token_by_login(self, login: str) -> str:
+    def _find_token(self, login: str, key: str) -> str:
         response = self.mailhog.mailhog_api.get_api_v2_messages()
         assert response.status_code == 200, "Письма не были получены"
         token = None
         for item in response.json()['items']:
             user_data = loads(item['Content']['Body'])
             user_login = user_data['Login']
-            if user_login == login:
-                token = user_data['ConfirmationLinkUrl'].split('/')[-1]
+            if user_login == login and key in user_data:
+                token = user_data[key].split('/')[-1]
         return token
+
+    @retrier()
+    def get_activation_token_by_login(self, login: str) -> str:
+        return self._find_token(login, 'ConfirmationLinkUrl')
+
+    @retrier()
+    def get_reset_token_by_login(self, login: str) -> str:
+        return self._find_token(login, 'ConfirmationLinkUri')
 
     def change_email(self, login: str, password: str, new_email: str):
         json_data = {
@@ -89,12 +97,21 @@ class AccountHelper:
         response = self.dm_account_api.account_api.put_v1_account_email(json_data=json_data)
         assert response.status_code == 200, f"Ошибка {response.status_code} - email не изменён"
 
-    def change_password(self, login: str, token: str, old_password: str, new_password: str):
+    def reset_password(self, login: str, email: str):
+        json_data = {
+            'login': login,
+            'email': email,
+        }
+        response = self.dm_account_api.account_api.post_v1_account_password(json_data=json_data)
+        assert response.status_code == 200, f"Ошибка {response.status_code} - пароль не сброшен"
+
+    def change_password(self, login: str, old_password: str, new_password: str):
+        token = self.get_reset_token_by_login(login=login)
         json_data = {
             'login': login,
             'token': token,
             'oldPassword': old_password,
             'newPassword': new_password,
         }
-        response = self.dm_account_api.account_api.put_v1_account_email(json_data=json_data)
-        assert response.status_code == 200, f"Ошибка {response.status_code} - email не изменён"
+        response = self.dm_account_api.account_api.put_v1_account_password(json_data=json_data)
+        assert response.status_code == 200, f"Ошибка {response.status_code} - пароль не изменён"
