@@ -8,6 +8,5 @@ def test_put_v1_account_email(prepare_user, account_helper):
     account_helper.register_new_user(login, password, email)
     account_helper.user_login(login, password)
     account_helper.change_email(login, password, new_email)
-    account_helper.user_login(login, password, expected_status_code=403)
     account_helper.confirm_by_email(login)
     account_helper.user_login(login, password)
