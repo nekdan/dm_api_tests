@@ -5,4 +5,4 @@ def test_delete_v1_account_login(prepare_user, auth_account_helper, account_help
 
     account_helper.register_new_user(login, password, email)
     auth_session = auth_account_helper(login, password)
-    auth_session.dm_account_api.login_api.delete_v1_account_login()
+    auth_session.user_logout()

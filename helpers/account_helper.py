@@ -7,7 +7,6 @@ from services.dm_api_account import DMApiAccount
 def retrier(number_retries: int = 3, delay_seconds: int = 1):
     def decorator(func):
         def wrapper(*args, **kwargs):
-            login = kwargs.get('login')
             token = None
             count = 0
             while token is None:
@@ -15,7 +14,7 @@ def retrier(number_retries: int = 3, delay_seconds: int = 1):
                 token = func(*args, **kwargs)
                 count += 1
                 if count > number_retries:
-                    raise AssertionError(f"Превышено количество попыток({number_retries}) получения токена для {login}")
+                    raise AssertionError(f"Превышено количество попыток({number_retries}) получения токена")
                 if token:
                     return token
                 time.sleep(delay_seconds)
@@ -69,6 +68,14 @@ class AccountHelper:
             f"Ошибка авторизации. Ожидался статус-код {expected_status_code}, но получен {response.status_code}"
         return response
 
+    def user_logout(self):
+        response = self.dm_account_api.login_api.delete_v1_account_login()
+        return response
+
+    def user_logout_all(self):
+        response = self.dm_account_api.login_api.delete_v1_account_login_all()
+        return response
+
     def _find_token(self, login: str, key: str) -> str:
         response = self.mailhog.mailhog_api.get_api_v2_messages()
         assert response.status_code == 200, "Письма не были получены"
@@ -105,7 +112,8 @@ class AccountHelper:
         response = self.dm_account_api.account_api.post_v1_account_password(json_data=json_data)
         assert response.status_code == 200, f"Ошибка {response.status_code} - пароль не сброшен"
 
-    def change_password(self, login: str, old_password: str, new_password: str):
+    def change_password(self, login: str, email:str, old_password: str, new_password: str):
+        self.reset_password(login, email)
         token = self.get_reset_token_by_login(login=login)
         json_data = {
             'login': login,
@@ -115,3 +123,7 @@ class AccountHelper:
         }
         response = self.dm_account_api.account_api.put_v1_account_password(json_data=json_data)
         assert response.status_code == 200, f"Ошибка {response.status_code} - пароль не изменён"
+
+    def get_user(self):
+        response = self.dm_account_api.account_api.get_v1_account()
+        return response
