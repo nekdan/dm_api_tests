@@ -132,8 +132,7 @@ class AccountHelper:
             oldPassword=old_password,
             newPassword=new_password
         )
-        response = self.dm_account_api.account_api.put_v1_account_password(change_password=change_password)
-        assert response.status_code == 200, f"Ошибка {response.status_code} - пароль не изменён"
+        self.dm_account_api.account_api.put_v1_account_password(change_password=change_password)
 
     def get_user(self, validate_response: bool = True):
         response = self.dm_account_api.account_api.get_v1_account(validate_response)

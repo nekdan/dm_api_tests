@@ -71,7 +71,7 @@ class AccountAPI(RestClient):
             'Content-Type': 'application/json',
         }
         response = self.put('/v1/account/password', headers=headers,
-                            json=change_password.model_dump(exclude_none=True, by_alias=True))
+                            json=change_password.model_dump(exclude_none=True, by_alias=True, mode='json'))
         return UserEnvelope(**response.json()) if validate_response else response
 
     def post_v1_account_password(self,
