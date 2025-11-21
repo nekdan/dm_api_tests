@@ -9,10 +9,14 @@ from restclient.configuration import Configuration
 class RestClient:
     def __init__(self, configuration: Configuration):
         self.host = configuration.host
-        self.headers = configuration.headers
+        self.set_headers(configuration.headers)
         self.disable_log = configuration.disable_log
         self.session = Session()
         self.log = structlog.get_logger(__name__).bind(service='api')
+
+    def set_headers(self, headers: dict):
+        if headers:
+            self.session.headers.update(headers)
 
     def post(self, endpoint, **kwargs):
         return self._send_request('POST', endpoint, **kwargs)
