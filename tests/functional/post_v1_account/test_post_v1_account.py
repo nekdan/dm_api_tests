@@ -1,30 +1,31 @@
+from datetime import datetime
 
-import structlog
-
-from helpers.account_helper import AccountHelper
-from restclient.configuration import Configuration as DmApiConfiguration
-from restclient.configuration import Configuration as MailhogConfiguration
-from services.api_mailhog import ApiMailhog
-from services.dm_api_account import DMApiAccount
-
-structlog.configure(
-    processors=[
-        structlog.processors.JSONRenderer(indent=4, ensure_ascii=True, sort_keys=True),
-    ]
-)
+from hamcrest import assert_that, has_property, starts_with, all_of, instance_of, has_properties, equal_to
 
 
-def test_post_v1_account():
-    mailhog_configuration = MailhogConfiguration(host='http://5.63.153.31:5025')
-    dm_api_configuration =DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
-
-    account = DMApiAccount(configuration=dm_api_configuration)
-    mailhog = ApiMailhog(configuration=mailhog_configuration)
-    account_helper = AccountHelper(dm_account_api=account, mailhog=mailhog)
-
-    login = 'n.danilushkin45'
-    email = f'{login}@mail.ru'
-    password = '123456'
+def test_post_v1_account(account_helper, prepare_user):
+    login = prepare_user.login
+    email = prepare_user.email
+    password = prepare_user.password
 
     account_helper.register_new_user(login, password, email)
-    account_helper.user_login(login, password)
+    response = account_helper.user_login(login, password, validate_response=True)
+    assert_that(
+        response, all_of(
+            has_property('resource', has_property('login', starts_with('n.danilushkin'))),
+            has_property('resource', has_property('registration', instance_of(datetime))),
+            has_property(
+                'resource', has_properties(
+                    {
+                        "rating": has_properties(
+                            {
+                                "enabled": equal_to(True),
+                                "quality": equal_to(0),
+                                "quantity": equal_to(0)
+                            }
+                        )
+                    }
+                )
+            )
+        )
+    )
