@@ -65,7 +65,9 @@ class AccountHelper:
                    login: str,
                    password: str,
                    remember_me: bool = True,
-                   validate_response: bool = False
+                   validate_response: bool = False,
+                   validate_heders: bool = False,
+                   expected_status_code: int = 200,
                    ):
         login_credentials = LoginCredentials(
             login=login,
@@ -76,9 +78,10 @@ class AccountHelper:
             login_credentials=login_credentials,
             validate_response=validate_response
         )
-        assert response.headers['x-dm-auth-token'], "Токен для пользователя не был получен"
-        # assert response.status_code == expected_status_code, \
-        #     f"Ошибка авторизации. Ожидался статус-код {expected_status_code}, но получен {response.status_code}"
+        if validate_heders:
+            assert response.headers['x-dm-auth-token'], "Токен для пользователя не был получен"
+            assert response.status_code == expected_status_code, \
+                f"Ошибка авторизации. Ожидался статус-код {expected_status_code}, но получен {response.status_code}"
         return response
 
     def user_logout(self):
